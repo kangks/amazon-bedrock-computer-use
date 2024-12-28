@@ -129,7 +129,7 @@ class BedrockComputerInteraction:
                         match tool_name:
                             case "computer":
                                 tool_result_contents.append(self.computer_use.handle(toolUse))
-                            case "s3_upload":
+                            case self.tool_use_s3_upload.TOOLSPECNAME:
                                 tool_result_contents.append(self.tool_use_s3_upload.handle(toolUse))
                             case _:
                                 logger.exception(f"Unknown input: {toolUse}")
@@ -187,22 +187,7 @@ if __name__ == "__main__":
     TOOL_CONFIG = {
         'tools': [
             {
-                'toolSpec': {
-                    'name': 's3_upload',
-                    "description": "Upload document to AWS S3",
-                    'inputSchema': {
-                        'json': {
-                            'type': 'object',
-                            "properties": {
-                                "filename": {
-                                    "type": "string",
-                                    "description": "The filename of the file to be uploaded"
-                                }
-                            },
-                            "required": ["filename"]                            
-                        }
-                    }
-                }
+                'toolSpec': S3Upload.TOOLSPEC
             }
         ]
     }

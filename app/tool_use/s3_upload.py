@@ -5,6 +5,28 @@ import logging
 from botocore.exceptions import ClientError
 
 class S3Upload:
+    TOOLSPECNAME='s3_upload'
+    TOOLSPEC={
+                'name': TOOLSPECNAME,
+                "description": "Upload document to AWS S3",
+                'inputSchema': {
+                    'json': {
+                        'type': 'object',
+                        "properties": {
+                            "filename": {
+                                "type": "string",
+                                "description": "The filename of the file to be uploaded"
+                            },
+                            "bucketname": {
+                                "type": "string",
+                                "description": "The S3 bucket name to upload the file to"
+                            }
+
+                        },
+                        "required": ["filename","bucketname"]                            
+                    }
+                }
+            }
     def __init__(self):
         boto3_config = Config(
             region_name = 'us-east-1',
@@ -26,9 +48,9 @@ class S3Upload:
         tool_use_id = toolUse['toolUseId']
         # tool_use_input_content = toolUse['input']['content']
         tool_use_input_filename = toolUse['input']['filename']
-        bucket='bedrock-video-generation-us-east-1-xfkogc'
+        tool_use_input_bucketname = toolUse['input']['bucketname']
         try:
-            response = self.client.upload_file(tool_use_input_filename, bucket, tool_use_input_filename)
+            response = self.client.upload_file(tool_use_input_filename, tool_use_input_bucketname, tool_use_input_filename)
             return {
                 'toolResult': {
                     'toolUseId': tool_use_id,
