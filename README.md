@@ -23,8 +23,57 @@ Bedrock: [{'text': 'Based on the latest COE bidding results for December 2024 2n
 
 # Implementation Details
 
-## computer_use.py Overview
-The `computer_use.py` script implements a Bedrock-powered computer interaction system with the following key components:
+## Separation of Concerns
+
+`computer_use` in `computer_use.py`
+
+The `computer_use` module is responsible for handling interactions with the computer, such as mouse clicks, keyboard inputs, and screenshots. This is defined in the `computer_use.py` file. The main class, `BedrockComputerInteraction`, contains the `main_loop` method, which processes user inputs and executes the corresponding tool actions.
+
+The `SaveScreenshot` class manages screenshot functionality for capturing computer screen during interactions, and stores images in the ./output_images directory
+
+`tool_use` in `tool_use/s3_upload.py`
+The tool_use module handles interactions related to S3 uploads. This is defined in the tool_use/s3_upload.py file. Similar to computer_use, it processes specific tool actions related to uploading files to S3.
+
+Integration in `main.py`
+The separation of concerns is managed in the main.py file. The main_loop method in the BedrockComputerInteraction class handles different tool uses by matching the tool name and delegating the action to the appropriate handler. Here is an excerpt from main.py:
+
+```python
+class BedrockComputerInteraction:
+    #...
+    def main_loop(self, user_input):
+        #...
+        case "tool_use":
+            for toolUse in self.get_tool_use(message_content):
+                tool_name = toolUse['name']
+                match tool_name:
+                    case "computer":
+                        tool_result_contents.append(self.computer_use.handle(toolUse))
+                    case "s3_upload":
+                        tool_result_contents.append(self.tool_use_s3_upload.handle(toolUse))
+                    case _:
+                        logger.exception(f"Unknown input: {toolUse}")
+                        tool_use_id = toolUse['toolUseId']
+                        # dummy response
+                        tool_result_contents.append({
+                            'toolResult': {
+                                'toolUseId': tool_use_id,
+                                'content':[{'text': 'OK'}
+                                ]
+                            }
+                        })
+            # Add assistant message and user tool result
+            self.add_message(role="assistant", content=message_content)
+            self.add_message(role="user", content=tool_result_contents)
+        case "end_turn":
+            # Step 4: Reply to user and get new input or exit
+            logger.info(f"Bedrock: {message_content}")
+            #...
+```
+
+This structure ensures that each module is responsible for its specific set of actions, promoting a clean separation of concerns and easier maintainability.
+
+## main.py Overview
+The `main.py` script implements a Bedrock-powered computer interaction system with the following key components:
 
 1. `BedrockComputerInteraction` class:
    - Manages interactions with AWS Bedrock service using Claude 3.5 Sonnet v2
@@ -32,85 +81,12 @@ The `computer_use.py` script implements a Bedrock-powered computer interaction s
    - Implements a main interaction loop for processing user inputs and Bedrock responses
    - Supports tool actions and screenshot capabilities
 
-2. `SaveScreenshot` class:
-   - Manages screenshot functionality for capturing computer screen during interactions
-   - Stores images in the ./output_images directory
-
 ## Main Functionality
 - The application runs an interactive loop that:
   - Takes user input
   - Sends requests to Bedrock
   - Processes responses and executes tool actions
-  - Captures screenshots when needed
   - Supports continuous dialogue until the user exits
-
-## Core Functions Overview
-
-### execute_tool_action (lines 126-230)
-Handles computer interaction through PyAutoGUI with these capabilities:
-
-1. Screenshot Action:
-   - `screenshot`: Captures screen using SaveScreenshot class
-   - Returns PNG image bytes with success status
-   - Uses standardized response format
-
-2. Keyboard Input Actions:
-   - `type`: Types text using pyautogui.write()
-   - `key`: Handles keyboard actions:
-     - Single keys (converts 'return' to 'enter')
-     - Key combinations (splits on '+' for hotkey use)
-
-3. Mouse Control Actions:
-   - `left_click`: Performs click at current position
-   - `mouse_move`: Moves cursor to specified x,y coordinates
-
-All actions return standardized response:
-```python
-{
-    'toolResult': {
-        'toolUseId': tool_use_id,
-        'content': [{'text': 'OK'}]
-        # Screenshot action includes additional image bytes
-    }
-}
-```
-
-### execute_tool_command (lines 107-125)
-Handles system shell command execution:
-- Takes command string input
-- Executes via subprocess.run(command, shell=True)
-- Captures command output in UTF-8 format
-- Returns standardized response with toolUseId
-
-### Integration in main_loop (lines 240-316)
-
-The main_loop orchestrates these functions through this flow:
-
-1. Initial Processing:
-   - Takes user input 
-   - Sends to Bedrock for processing
-   - Analyzes response stop_reason
-
-2. Tool Execution Flow:
-   When stop_reason is "tool_use":
-   ```python
-   if input_data.get('action'):
-       # Computer control actions (mouse/keyboard/screenshot)
-       result = execute_tool_action(action, input_data, tool_use_id)
-   elif input_data.get('command'):
-       # Shell commands
-       result = execute_tool_command(command, input_data, tool_use_id)
-   elif input_data.get('type'):
-       # Special case - routes to execute_tool_command
-       result = execute_tool_command(command, input_data, tool_use_id)
-   ```
-
-3. Results Processing:
-   - Adds tool execution results to conversation history
-   - For "end_turn" stop_reason:
-     - Shows Bedrock response
-     - Gets next user input
-     - Continues interaction loop until 'exit'
      
 ## Docker Container Details
 The application runs in a Docker container with the following key components:
