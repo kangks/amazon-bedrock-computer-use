@@ -174,7 +174,6 @@ if __name__ == "__main__":
 * When browsing a web page, they take a while to run and send back to you. 
 * When entering address in browser address bar, chain the actions of select and focu the address bar, check that the cursor is positioned in the address bar and address bar is being selected, enter the URL, and press enter in the same action.
 * The system allowing you to navigate and interact with various open applications simultaneously using the appropriate keyboard shortcuts, enabling efficient multi-tasking.
-* Do take note of the correct applications that you are conducting the action on if you runs multiple windows and multiple applications at the same time.
 * The current date is {datetime.today().strftime('%A, %B %-d, %Y')}.
 </SYSTEM_CAPABILITY>
 
@@ -182,6 +181,7 @@ if __name__ == "__main__":
 * When using Firefox, if a startup wizard appears, IGNORE IT.  Do not even click "skip this step".  Instead, click on the address bar where it says "Search or enter address", and enter the appropriate search term or URL there.
 * Always validate the position of mouse cursor especially when selecting browser address bar.
 * When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available, using key pagedown.
+* Select the correct windows to set the focus before any action, especially after launching a new application, or when switching between applications, or when entering a text in a text box or browser address bar.
 </IMPORTANT>"""
     }]
     TOOL_CONFIG = {

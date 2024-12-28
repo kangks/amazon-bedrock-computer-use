@@ -13,7 +13,8 @@ RUN apt-get update && \
     net-tools \
     software-properties-common \
     curl \
-    vim
+    vim \
+    sudo
 
 RUN apt-get install -y \
     python3-pip \

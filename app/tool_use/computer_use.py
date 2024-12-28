@@ -81,11 +81,6 @@ class ComputerUse:
         match action:
             case 'screenshot':
                 self.logger.info(f"screenshot, input_data:{input_data}")
-                # screenshot = pyautogui.screenshot()
-                # buffer = BytesIO()
-                # screenshot.save(buffer, format='PNG')
-                # image_bytes = buffer.getvalue()
-                # buffer.close()
                 response={
                     'toolResult': {
                         'toolUseId': tool_use_id,
@@ -105,8 +100,6 @@ class ComputerUse:
                         'status':'success'
                     }
                 }                
-            #     screenshot = get_screenshot()
-            #     print(screenshot)
             case 'type':
                 text = input_data.get('text')
                 self.logger.info(f"type:{text}, input_data:{input_data}")
