@@ -14,7 +14,13 @@ RUN apt-get update && \
     software-properties-common \
     curl \
     vim \
-    sudo
+    # Computer use might install additional tools using sudo
+    sudo 
+    
+RUN apt-get install -y \
+    libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev \
+    # For xvfb screen recording
+    ffmpeg
 
 RUN apt-get install -y \
     python3-pip \
@@ -55,7 +61,7 @@ COPY --chown=$USERNAME:$USERNAME app $HOME/app/
 COPY --chown=$USERNAME:$USERNAME entrypoint.sh $HOME/
 RUN chmod +rx $HOME/entrypoint.sh
 
-ARG DISPLAY_NUM=1
+ARG DISPLAY_NUM=0
 ARG HEIGHT=768
 ARG WIDTH=1024
 ENV DISPLAY_NUM=$DISPLAY_NUM

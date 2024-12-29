@@ -129,8 +129,10 @@ class BedrockComputerInteraction:
                         match tool_name:
                             case "computer":
                                 tool_result_contents.append(self.computer_use.handle(toolUse))
-                            case self.tool_use_s3_upload.TOOLSPECNAME:
-                                tool_result_contents.append(self.tool_use_s3_upload.handle(toolUse))
+                            case self.tool_use_s3_upload.TOOLSPECNAME_UPLOAD_FILE:
+                                tool_result_contents.append(self.tool_use_s3_upload.upload_file(toolUse))
+                            case self.tool_use_s3_upload.TOOLSPECNAME_UPLOAD_MEMORY:
+                                tool_result_contents.append(self.tool_use_s3_upload.upload_object(toolUse))
                             case _:
                                 logger.exception(f"Unknown input: {toolUse}")
                                 tool_use_id = toolUse['toolUseId']
@@ -185,12 +187,9 @@ if __name__ == "__main__":
 </IMPORTANT>"""
     }]
     TOOL_CONFIG = {
-        'tools': [
-            {
-                'toolSpec': S3Upload.TOOLSPEC
-            }
-        ]
+        'tools': [*S3Upload.TOOLSPEC]
     }
+    logger.info(f"TOOL_CONFIG: {TOOL_CONFIG}")
     ADDITIONAL_REQUEST_FIELDS = {
             "tools": [
                 {
