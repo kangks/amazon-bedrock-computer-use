@@ -79,8 +79,10 @@ class S3Upload:
         )
         self.client = session.client("s3", config=boto3_config)
         self.logger = logging.getLogger(__name__)
+        self.logger.debug("S3Upload initialized")
+
     def upload_file(self, toolUse):
-        self.logger.info(f"toolUse: {toolUse}")
+        self.logger.debug(f"toolUse: {toolUse}")
         tool_use_id = toolUse['toolUseId']
         # tool_use_input_content = toolUse['input']['content']
         localFile = toolUse['input']['localFile']
@@ -103,7 +105,7 @@ class S3Upload:
             logging.exception(e)
             raise e
     def upload_object(self, toolUse):
-        self.logger.info(f"toolUse: {toolUse}")
+        self.logger.debug(f"toolUse: {toolUse}")
         tool_use_id = toolUse['toolUseId']
         # tool_use_input_content = toolUse['input']['content']
         object_data = toolUse['input']['object_data']

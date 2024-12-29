@@ -16,23 +16,9 @@ import sys
 if(os.environ.get('DISPLAY')):
     pyautogui._pyautogui_x11._display = Xlib.display.Display(os.environ.get('DISPLAY'))
 
-# logging.basicConfig(level=logging.INFO)
-# # logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-# logFormatter = logging.Formatter("%(asctime)s [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s")
-# rootLogger = logging.getLogger()
-
-# logPath="logs"
-# fileHandler = logging.FileHandler(f"{os.path.dirname(__file__)}/logs/{os.path.basename(__file__)}.log")
-# fileHandler.setFormatter(logFormatter)
-# rootLogger.addHandler(fileHandler)
-
-# consoleHandler = logging.StreamHandler()
-# consoleHandler.setFormatter(logFormatter)
-# rootLogger.addHandler(consoleHandler)
-
 class SaveScreenshot:
     def __init__(self):
-        self.image_location="./output_images"
+        self.image_location = os.environ.get("LOG_OUTPUT_FOLDER", os.path.dirname(__file__) + "/logs")
         self.counter=0
         self.logger = logging.getLogger(__name__)
     
@@ -40,7 +26,7 @@ class SaveScreenshot:
         screenshot = pyautogui.screenshot()
         buffer = BytesIO()
         screenshot.save(buffer, format='PNG')
-        screenshot_filename=f"{os.path.dirname(__file__)}/../logs/screen_shot_{self.counter}.png"
+        screenshot_filename=f"{self.image_location}/screen_shot_{self.counter}.png"
         self.counter+=1
         self.logger.info(f"saving screenshot to {screenshot_filename}")
         screenshot.save(screenshot_filename, format='PNG')
@@ -52,13 +38,15 @@ class ComputerUse:
     def __init__(self):
         self.screenshot = SaveScreenshot()
         self.logger = logging.getLogger(__name__)
-        
-    def execute_tool_command(self, command, input_data, tool_use_id):
-        self.logger.info(f"Executing tool commnd: {command} for tool_use_id: {tool_use_id}")
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.debug("ComputerUse initialized")
 
-        self.logger.info(f"command:{command}, input_data:{input_data}")
+    def execute_tool_command(self, command, input_data, tool_use_id):
+        self.logger.debug(f"Executing tool commnd: {command} for tool_use_id: {tool_use_id}")
+
+        self.logger.debug(f"command:{command}, input_data:{input_data}")
         result = subprocess.run(command, shell=True, stdout=subprocess.PIPE).stdout.decode('utf-8')
-        self.logger.info(f"result:{result}")
+        self.logger.debug(f"result:{result}")
         response={
             'toolResult': {
                 'toolUseId': tool_use_id,
@@ -77,10 +65,10 @@ class ComputerUse:
         # Placeholder logic for tool execution
         # Replace with actual tool execution logic
         # response = {}
-        self.logger.info(f"Executing tool action: {action} for tool_use_id: {tool_use_id}")
+        self.logger.debug(f"Executing tool action: {action} for tool_use_id: {tool_use_id}")
         match action:
             case 'screenshot':
-                self.logger.info(f"screenshot, input_data:{input_data}")
+                self.logger.debug(f"screenshot, input_data:{input_data}")
                 response={
                     'toolResult': {
                         'toolUseId': tool_use_id,
@@ -102,7 +90,7 @@ class ComputerUse:
                 }                
             case 'type':
                 text = input_data.get('text')
-                self.logger.info(f"type:{text}, input_data:{input_data}")
+                self.logger.debug(f"type:{text}, input_data:{input_data}")
                 pyautogui.write(input_data.get('text'))
                 response={
                     'toolResult': {
@@ -116,7 +104,7 @@ class ComputerUse:
                 }                
             case 'key':
                 key = input_data.get('text')
-                self.logger.info(f"key:{key}, input_data:{input_data}")
+                self.logger.debug(f"key:{key}, input_data:{input_data}")
                 if key.lower() == 'return':
                     key = 'enter'
                     pyautogui.press(key)
@@ -125,7 +113,7 @@ class ComputerUse:
                     pyautogui.press(key)
                 elif '+' in key:
                     keys = key.split('+')
-                    self.logger.info(f"keys:{keys}, using pyautogui.hotkey()")
+                    self.logger.debug(f"keys:{keys}, using pyautogui.hotkey()")
                     pyautogui.hotkey(*keys)
                 else:
                     pyautogui.press(input_data.get('text'))
@@ -141,7 +129,7 @@ class ComputerUse:
                     }
                 }                
             case 'left_click' | 'right_click':
-                self.logger.info(f"mouse click, input_data:{input_data}")
+                self.logger.debug(f"mouse click, input_data:{input_data}")
                 pyautogui.click(button=f'{action.replace("_click","")}')
                 sleep(0.25)
                 response={
@@ -156,7 +144,7 @@ class ComputerUse:
                 }                
             case 'mouse_move':
                 coordinate = input_data['coordinate']
-                self.logger.info(f"coordinate: {coordinate}, input_data:{input_data}")
+                self.logger.debug(f"coordinate: {coordinate}, input_data:{input_data}")
                 # coord_str = coordinate.strip('[]')
                 # x, y = map(int, coord_str.split(','))
                 pyautogui.moveTo(coordinate[0],coordinate[1])
@@ -181,12 +169,12 @@ class ComputerUse:
         tool_use_id = toolUse['toolUseId']
         if(input_data.get('action')):
             action = input_data.get('action')
-            self.logger.info(f'action:{action}')
+            self.logger.debug(f'action:{action}')
             tool_result = self.execute_tool_action(action, input_data, tool_use_id)
             return tool_result
         elif(input_data.get('command')):
             command = input_data.get('command')
-            self.logger.info(f'command:{command}')
+            self.logger.debug(f'command:{command}')
             tool_result = self.execute_tool_command(command, input_data, tool_use_id)
             return tool_result
         # elif(input_data.get('type')):
@@ -201,5 +189,3 @@ class ComputerUse:
         else:            
             self.logger.exception(f"Unknown input: {input_data}")
             raise ValueError(f"Unknown input: {input_data}")
-            # dummy response
-            # return None

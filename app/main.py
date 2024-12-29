@@ -16,23 +16,31 @@ import sys
 from tool_use.computer_use import ComputerUse
 from tool_use.s3_upload import S3Upload
 
-logging.basicConfig(level=logging.INFO)
-# logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-logFormatter = logging.Formatter("%(asctime)s [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s")
-rootLogger = logging.getLogger()
-
-logPath="logs"
-fileHandler = logging.FileHandler(f"{os.path.dirname(__file__)}/logs/{os.path.basename(__file__)}.log")
-fileHandler.setFormatter(logFormatter)
-rootLogger.addHandler(fileHandler)
-
+# main thread logging config
+LOG_OUTPUT_FOLDER = os.environ.get("LOG_OUTPUT_FOLDER", os.path.dirname(__file__) + "/logs")
+fileHandler = logging.FileHandler(f"{LOG_OUTPUT_FOLDER}/{os.path.basename(__file__)}.log")
 consoleHandler = logging.StreamHandler()
-consoleHandler.setFormatter(logFormatter)
-rootLogger.addHandler(consoleHandler)
+logging.basicConfig(
+    format="%(asctime)s [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s",
+    datefmt="%Y-%m-%d:%H:%M:%S",
+    force=True,
+    handlers=[
+        fileHandler,
+        consoleHandler
+    ]
+    )
+
+fileHandler.setLevel(logging.DEBUG)
+# logging.getLogger().addHandler(fileHandler)
+
+consoleHandler.setLevel(logging.INFO)
+# logging.getLogger().addHandler(consoleHandler)
+
+logging.getLogger("tool_use.computer_use").setLevel(logging.DEBUG)
+logging.getLogger("tool_use.s3_upload").setLevel(logging.DEBUG)
 
 logger = logging.getLogger(__name__)
-
-THROTTLING_DELAY_SECONDS=int(os.environ.get("THROTTLING_DELAY_SECONDS",10))
+logger.setLevel(logging.DEBUG)
     
 class BedrockComputerInteraction:
     def __init__(self, region_name, model_id, system, tool_config, additional_request_fields):
@@ -56,13 +64,15 @@ class BedrockComputerInteraction:
         self.tool_config = tool_config
         self.additional_request_fields = additional_request_fields
         self.messages = []
+        self.THROTTLING_DELAY_SECONDS=int(os.environ.get("THROTTLING_DELAY_SECONDS",10))
+
         self.computer_use = ComputerUse()
         self.tool_use_s3_upload = S3Upload()
 
     def send_to_bedrock(self):
         """Send messages to Bedrock and get the response using boto3."""
         try:            
-            sleep(THROTTLING_DELAY_SECONDS)
+            sleep(self.THROTTLING_DELAY_SECONDS)
             response = self.client.converse(
                 modelId=self.model_id,
                 messages=self.messages,
@@ -112,14 +122,21 @@ class BedrockComputerInteraction:
                 logger.exception("Failed to get a response from Bedrock. Exiting.")
                 break
 
-            logger.info(f'bedrock_response:{bedrock_response}')
+            logger.debug(f'bedrock_response:{bedrock_response}')
+            logger.debug( pformat(bedrock_response) )
+
+            if bedrock_response.get('output') and bedrock_response.get('output').get('message') and bedrock_response.get('output').get('message').get('content'):
+                for item in bedrock_response.get('output').get('message').get('content'):
+                    message_content = item.get('text')
+                    if message_content:
+                        logger.info(f'message_content:{message_content}') 
 
             # Step 2: Handle Bedrock response
             stop_reason = bedrock_response.get("stopReason")
             message_content = bedrock_response.get("output", {}).get("message", {}).get("content")
 
-            logger.info(f'stop_reason:{stop_reason}')
-            logger.info(f'message_content:{message_content}')
+            logger.debug(f'stop_reason:{stop_reason}')
+            logger.debug(f'message_content:{message_content}')
 
             tool_result_contents=[]
             match stop_reason:
@@ -189,7 +206,7 @@ if __name__ == "__main__":
     TOOL_CONFIG = {
         'tools': [*S3Upload.TOOLSPEC]
     }
-    logger.info(f"TOOL_CONFIG: {TOOL_CONFIG}")
+    logger.debug(f"TOOL_CONFIG: {TOOL_CONFIG}")
     ADDITIONAL_REQUEST_FIELDS = {
             "tools": [
                 {
@@ -204,7 +221,7 @@ if __name__ == "__main__":
             "anthropic_beta": ["computer-use-2024-10-22"]
         }
     
-    logger.info(f"ADDITIONAL_REQUEST_FIELDS: {ADDITIONAL_REQUEST_FIELDS}")
+    logger.debug(f"ADDITIONAL_REQUEST_FIELDS: {ADDITIONAL_REQUEST_FIELDS}")
 
     interaction = BedrockComputerInteraction(
         region_name=REGION_NAME,
