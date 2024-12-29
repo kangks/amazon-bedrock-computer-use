@@ -21,7 +21,7 @@ LOG_OUTPUT_FOLDER = os.environ.get("LOG_OUTPUT_FOLDER", os.path.dirname(__file__
 fileHandler = logging.FileHandler(f"{LOG_OUTPUT_FOLDER}/{os.path.basename(__file__)}.log")
 consoleHandler = logging.StreamHandler()
 logging.basicConfig(
-    format="%(asctime)s [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s",
+    format="%(asctime)s [%(filename)s:%(lineno)s - %(funcName)10s() ] %(message)s",
     datefmt="%Y-%m-%d:%H:%M:%S",
     force=True,
     handlers=[
@@ -105,10 +105,11 @@ class BedrockComputerInteraction:
             if 'toolUse' in item:
                 yield item['toolUse']
 
-    def main_loop(self, user_input):
+    def main_loop(self, user_input=None):
         print("Welcome to the Bedrock Interaction Script.")
-        # user_input = input("Please enter your initial input: ")
-        # user_input = "Retrieve the latest Singapore COE bidding price"
+
+        if not user_input:
+            user_input = input("Please enter your initial input: ")
 
         logger.info(f'user_input:{user_input}')
         # Add the initial user input
@@ -129,7 +130,7 @@ class BedrockComputerInteraction:
                 for item in bedrock_response.get('output').get('message').get('content'):
                     message_content = item.get('text')
                     if message_content:
-                        logger.info(f'message_content:{message_content}') 
+                        logger.info(f'agent: {message_content}') 
 
             # Step 2: Handle Bedrock response
             stop_reason = bedrock_response.get("stopReason")
@@ -233,4 +234,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         interaction.main_loop(sys.argv[1])
     else:
-        raise ValueError(f"Missing initial input. usage: {os.path.basename(__file__)} <initial input, such as Retrieve the latest Singapore COE bidding price>")
+        interaction.main_loop()

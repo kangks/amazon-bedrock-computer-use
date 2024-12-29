@@ -28,7 +28,7 @@ class SaveScreenshot:
         screenshot.save(buffer, format='PNG')
         screenshot_filename=f"{self.image_location}/screen_shot_{self.counter}.png"
         self.counter+=1
-        self.logger.info(f"saving screenshot to {screenshot_filename}")
+        self.logger.debug(f"saving screenshot to {screenshot_filename}")
         screenshot.save(screenshot_filename, format='PNG')
         image_bytes = buffer.getvalue()
         buffer.close()
@@ -161,7 +161,8 @@ class ComputerUse:
             case _:
                 self.logger.exception("Unsupported action received")
                 raise ValueError(f"Unsupported action received: {action}")
-            
+
+        _ = self.screenshot.get_and_save_screen_shot()
         return response 
 
     def handle(self, toolUse):
