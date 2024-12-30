@@ -13,6 +13,7 @@ RUN apt-get update && \
     net-tools \
     software-properties-common \
     curl \
+    wget \
     vim \
     # Computer use might install additional tools using sudo
     sudo 
@@ -21,6 +22,11 @@ RUN apt-get install -y \
     libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev \
     # For xvfb screen recording
     ffmpeg
+
+RUN curl -s https://api.github.com/repos/jgraph/drawio-desktop/releases/latest \
+    | grep browser_download_url | grep '\.deb' | grep $(dpkg --print-architecture) | cut -d '"' -f 4 | wget -i - \
+    && apt -f install -y ./drawio-$(dpkg --print-architecture)-*.deb \
+    && rm -f ./drawio-$(dpkg --print-architecture)-*.deb
 
 RUN apt-get install -y \
     python3-pip \
@@ -52,6 +58,8 @@ RUN useradd -m -s /bin/bash -d $HOME $USERNAME
 RUN echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 USER computeruse
 WORKDIR $HOME
+
+COPY --chown=$USERNAME:$USERNAME config/draw.io/config.json $HOME/.config/draw.io/config.json
 
 COPY --chown=$USERNAME:$USERNAME app/requirements.txt $HOME/app/requirements.txt
 RUN python3.10 -m pip install -r $HOME/app/requirements.txt
