@@ -142,6 +142,34 @@ class ComputerUse:
                         ]
                     }
                 }                
+            case 'left_click_drag' | 'right_click_drag':
+                coordinate = input_data['coordinate']
+                self.logger.debug(f"mouse drag, input_data:{input_data}")
+                pyautogui.dragTo(coordinate[0], coordinate[1], button=f'{action.replace("_click","")}')
+                sleep(0.25)
+                response={
+                    'toolResult': {
+                        'toolUseId': tool_use_id,
+                        'content':[
+                            {
+                                'text': 'OK'
+                            }
+                        ]
+                    }
+                }
+            case 'double_click':
+                self.logger.debug(f"double click, input_data:{input_data}")
+                pyautogui.doubleClick()
+                response={
+                    'toolResult': {
+                        'toolUseId': tool_use_id,
+                        'content':[
+                            {
+                                'text': 'OK'
+                            }
+                        ]
+                    }
+                }
             case 'mouse_move':
                 coordinate = input_data['coordinate']
                 self.logger.debug(f"coordinate: {coordinate}, input_data:{input_data}")
